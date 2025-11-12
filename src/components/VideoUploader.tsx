@@ -218,6 +218,19 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({ video, onVideoUplo
                 </div>
               </div>
             )}
+            {video && video.size > 10 * 1024 * 1024 && (
+              <div style={{
+                padding: '12px',
+                background: 'rgba(255, 152, 0, 0.1)',
+                borderLeft: '3px solid var(--warning)',
+                borderRadius: '4px',
+                marginTop: '12px',
+                fontSize: '14px',
+                color: 'var(--text-primary)'
+              }}>
+                ⚠️ Большой размер файла ({formatFileSize(video.size)}) может замедлить обработку
+              </div>
+            )}
             <button
               className="replace-video-btn secondary"
               onClick={clearVideo}

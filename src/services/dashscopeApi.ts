@@ -90,7 +90,16 @@ export class DashScopeService {
       // Convert video file to base64 if it's a File object
       let videoData = request.videoPath;
       if (request.videoPath instanceof File) {
+        // Check file size before conversion
+        const fileSizeMB = request.videoPath.size / (1024 * 1024);
+        console.log(`Converting video to base64... File size: ${fileSizeMB.toFixed(2)}MB`);
+
+        if (fileSizeMB > 10) {
+          console.warn('Large video file detected. This may take longer to process.');
+        }
+
         videoData = await this.fileToBase64(request.videoPath);
+        console.log('Video converted to base64 successfully');
       }
 
       // Prepare the video content parameters
@@ -207,9 +216,9 @@ export class DashScopeService {
       reader.readAsDataURL(file);
       reader.onload = () => {
         if (typeof reader.result === 'string') {
-          // Remove the data:video/xxx;base64, prefix
-          const base64 = reader.result.split(',')[1];
-          resolve(base64);
+          // DashScope API expects full data URL format for videos
+          // Format: data:video/mp4;base64,xxxxx
+          resolve(reader.result); // Return full data URL, not just base64
         } else {
           reject(new Error('Failed to convert file to base64'));
         }
