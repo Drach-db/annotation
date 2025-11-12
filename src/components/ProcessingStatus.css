@@ -1,0 +1,322 @@
+.processing-status {
+  width: 100%;
+}
+
+/* Processing Container */
+.processing-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.progress-section {
+  width: 100%;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.progress-header h4 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.cancel-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  font-size: 18px;
+  color: var(--text-secondary);
+  background: transparent;
+  transition: all var(--transition-fast);
+}
+
+.cancel-btn:hover {
+  background: var(--error-light);
+  color: var(--error);
+  transform: rotate(90deg);
+}
+
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+  border-radius: var(--radius-full);
+  transition: width 300ms ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-glow {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: progressGlow 2s infinite;
+}
+
+@keyframes progressGlow {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.progress-percentage {
+  min-width: 45px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--primary);
+}
+
+.status-info {
+  margin-bottom: var(--spacing-md);
+}
+
+.stage-name {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.stage-indicator {
+  width: 8px;
+  height: 8px;
+  background: var(--primary);
+  border-radius: var(--radius-full);
+  animation: pulse 2s infinite;
+}
+
+.stage-detail {
+  margin: 0;
+  margin-left: calc(8px + var(--spacing-sm));
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.processing-tip {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--info-light);
+  border-left: 3px solid var(--info);
+  border-radius: var(--radius-sm);
+}
+
+.tip-icon {
+  font-size: 16px;
+}
+
+.tip-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* Error Container */
+.error-container {
+  background: var(--surface);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.1);
+}
+
+.error-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.error-icon {
+  font-size: 24px;
+}
+
+.error-header h4 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--error);
+}
+
+.error-content {
+  margin-bottom: var(--spacing-lg);
+}
+
+.error-message {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+}
+
+.error-code {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.error-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.retry-btn {
+  align-self: flex-start;
+}
+
+.error-details {
+  padding: var(--spacing-md);
+  background: var(--error-light);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
+.error-details summary {
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.error-details summary:hover {
+  color: var(--error);
+}
+
+.error-details ul {
+  margin: var(--spacing-sm) 0 0 0;
+  padding-left: var(--spacing-xl);
+  color: var(--text-secondary);
+}
+
+.error-details li {
+  margin-bottom: var(--spacing-xs);
+}
+
+/* Success Container */
+.success-container {
+  background: var(--surface);
+  border: 1px solid var(--success);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.success-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.success-icon {
+  font-size: 24px;
+}
+
+.success-header h4 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--success);
+}
+
+.success-message {
+  margin: 0;
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+}
+
+.success-animation {
+  position: absolute;
+  top: 50%;
+  right: var(--spacing-xl);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.success-circle,
+.success-circle-2,
+.success-circle-3 {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border: 2px solid var(--success);
+  border-radius: var(--radius-full);
+  opacity: 0;
+  animation: successRipple 3s infinite;
+}
+
+.success-circle-2 {
+  animation-delay: 1s;
+}
+
+.success-circle-3 {
+  animation-delay: 2s;
+}
+
+@keyframes successRipple {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  100% {
+    width: 60px;
+    height: 60px;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@media (max-width: 768px) {
+  .success-animation {
+    display: none;
+  }
+}
