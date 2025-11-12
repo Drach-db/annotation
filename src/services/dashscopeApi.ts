@@ -69,7 +69,7 @@ export class DashScopeService {
     });
   }
 
-  async annotateVideo(request: AnnotationRequest): Promise<AnnotationResponse> {
+  async annotateVideo(request: AnnotationRequest, onProgress?: (stage: string, detail: string) => void): Promise<AnnotationResponse> {
     const startTime = Date.now();
 
     // Debug logging
@@ -98,7 +98,15 @@ export class DashScopeService {
           console.warn('Large video file detected. This may take longer to process.');
         }
 
-        videoData = await this.fileToBase64(request.videoPath);
+        if (onProgress) {
+          onProgress('Конвертация видео', `Подготовка ${fileSizeMB.toFixed(1)}MB для отправки...`);
+        }
+
+        videoData = await this.fileToBase64WithProgress(request.videoPath, (progress) => {
+          if (onProgress) {
+            onProgress('Конвертация видео', `Обработано ${Math.round(progress)}%`);
+          }
+        });
         console.log('Video converted to base64 successfully');
       }
 
@@ -219,6 +227,31 @@ export class DashScopeService {
           // DashScope API expects full data URL format for videos
           // Format: data:video/mp4;base64,xxxxx
           resolve(reader.result); // Return full data URL, not just base64
+        } else {
+          reject(new Error('Failed to convert file to base64'));
+        }
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  }
+
+  private async fileToBase64WithProgress(file: File, onProgress?: (progress: number) => void): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      if (onProgress) {
+        reader.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const progress = (event.loaded / event.total) * 100;
+            onProgress(progress);
+          }
+        };
+      }
+
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
         } else {
           reject(new Error('Failed to convert file to base64'));
         }

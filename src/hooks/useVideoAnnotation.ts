@@ -170,9 +170,6 @@ export function useVideoAnnotation(apiKey: string): UseVideoAnnotationReturn {
       // Stage 4: Send to API
       updateProgress(60, 'Отправка в API', 'Отправка данных в DashScope API...');
 
-      // Stage 5: Process with model
-      updateProgress(80, 'Анализ модели', 'Qwen3-VL обрабатывает видео...');
-
       const result = await dashScopeServiceRef.current.annotateVideo({
         videoPath: video,
         fps: parameters.fps,
@@ -184,6 +181,12 @@ export function useVideoAnnotation(apiKey: string): UseVideoAnnotationReturn {
         minPixels: parameters.minPixels,
         maxPixels: parameters.maxPixels,
         totalPixels: parameters.totalPixels,
+      }, (stage, detail) => {
+        if (stage === 'Конвертация видео') {
+          updateProgress(50, stage, detail);
+        } else {
+          updateProgress(80, 'Анализ модели', 'Qwen3-VL обрабатывает видео...');
+        }
       });
 
       // Stage 6: Parse result

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import './VideoUploader.css';
+import { analyzeVideo, getCompressionCommand, getHandBrakeSettings } from '../utils/videoOptimizer';
 
 interface VideoUploaderProps {
   video: File | null;
@@ -18,6 +19,8 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({ video, onVideoUplo
   const [isDragging, setIsDragging] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string>('');
   const [metadata, setMetadata] = useState<VideoMetadata | null>(null);
+  const [showOptimizationDialog, setShowOptimizationDialog] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -108,7 +111,7 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({ video, onVideoUplo
     if (files.length > 0 && files[0]) {
       const file = files[0];
       if (validateFile(file)) {
-        onVideoUpload(file);
+        checkFileAndUpload(file);
       }
     }
   }, [onVideoUpload]);
@@ -118,10 +121,42 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({ video, onVideoUplo
     if (files && files[0]) {
       const file = files[0];
       if (validateFile(file)) {
-        onVideoUpload(file);
+        checkFileAndUpload(file);
       }
     }
   }, [onVideoUpload]);
+
+  const checkFileAndUpload = async (file: File) => {
+    // Get video metadata first
+    const videoElement = document.createElement('video');
+    videoElement.src = URL.createObjectURL(file);
+    await new Promise((resolve) => {
+      videoElement.onloadedmetadata = resolve;
+    });
+
+    const analysis = analyzeVideo(file, {
+      duration: videoElement.duration,
+      width: videoElement.videoWidth,
+      height: videoElement.videoHeight
+    });
+
+    URL.revokeObjectURL(videoElement.src);
+
+    if (!analysis.isOptimal && analysis.recommendation !== 'none') {
+      setPendingFile(file);
+      setShowOptimizationDialog(true);
+    } else {
+      onVideoUpload(file);
+    }
+  };
+
+  const handleSkipOptimization = () => {
+    if (pendingFile) {
+      onVideoUpload(pendingFile);
+      setShowOptimizationDialog(false);
+      setPendingFile(null);
+    }
+  };
 
   const handleClick = () => {
     fileInputRef.current?.click();
@@ -146,6 +181,141 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({ video, onVideoUplo
         onChange={handleFileSelect}
         style={{ display: 'none' }}
       />
+
+      {/* Optimization Dialog */}
+      {showOptimizationDialog && pendingFile && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '600px',
+            width: '90%'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0', color: '#ff5722' }}>
+              ⚠️ Видео требует оптимизации
+            </h3>
+
+            {(() => {
+              const videoElement = document.createElement('video');
+              videoElement.src = URL.createObjectURL(pendingFile);
+              const analysis = analyzeVideo(pendingFile, {
+                duration: metadata?.duration || 30,
+                width: metadata?.width || 1920,
+                height: metadata?.height || 1080
+              });
+
+              return (
+                <>
+                  <div style={{
+                    background: '#fff3e0',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    marginBottom: '20px'
+                  }}>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                      <strong>Текущий файл:</strong> {formatFileSize(pendingFile.size)}
+                    </p>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                      <strong>Битрейт:</strong> {analysis.bitrateMbps.toFixed(1)} Мбит/с
+                      (рекомендуется: 2-4 Мбит/с)
+                    </p>
+                    <p style={{ margin: '0', fontSize: '14px' }}>
+                      <strong>Оптимальный размер:</strong> ~{analysis.estimatedOptimalSizeMB?.toFixed(0)} MB
+                    </p>
+                  </div>
+
+                  <div style={{ marginBottom: '20px' }}>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>
+                      Как оптимизировать видео:
+                    </h4>
+
+                    <div style={{ marginBottom: '16px' }}>
+                      <strong style={{ fontSize: '14px' }}>Вариант 1: FFmpeg (командная строка)</strong>
+                      <pre style={{
+                        background: '#f5f5f5',
+                        padding: '8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        overflowX: 'auto',
+                        marginTop: '4px'
+                      }}>
+                        {getCompressionCommand(pendingFile, 'medium')}
+                      </pre>
+                    </div>
+
+                    <div style={{ marginBottom: '16px' }}>
+                      <strong style={{ fontSize: '14px' }}>Вариант 2: HandBrake (GUI)</strong>
+                      <p style={{ fontSize: '13px', margin: '4px 0' }}>
+                        Скачайте HandBrake с <a href="https://handbrake.fr" target="_blank" rel="noopener noreferrer">handbrake.fr</a>
+                      </p>
+                      <p style={{ fontSize: '13px', margin: '4px 0' }}>
+                        Используйте пресет: <code>{getHandBrakeSettings('medium')}</code>
+                      </p>
+                    </div>
+
+                    <div>
+                      <strong style={{ fontSize: '14px' }}>Вариант 3: Онлайн сервисы</strong>
+                      <ul style={{ fontSize: '13px', margin: '4px 0', paddingLeft: '20px' }}>
+                        <li>CloudConvert.com</li>
+                        <li>Clideo.com</li>
+                        <li>FreeConvert.com</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button
+                      onClick={handleSkipOptimization}
+                      style={{
+                        flex: 1,
+                        padding: '12px',
+                        background: '#ff5722',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                      }}
+                    >
+                      Продолжить без оптимизации
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowOptimizationDialog(false);
+                        setPendingFile(null);
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: '12px',
+                        background: '#f5f5f5',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      Отмена
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
 
       <div
         className={`upload-zone ${isDragging ? 'dragging' : ''} ${video ? 'has-video' : ''}`}
@@ -221,14 +391,33 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({ video, onVideoUplo
             {video && video.size > 10 * 1024 * 1024 && (
               <div style={{
                 padding: '12px',
-                background: 'rgba(255, 152, 0, 0.1)',
-                borderLeft: '3px solid var(--warning)',
+                background: video.size > 100 * 1024 * 1024 ? 'rgba(255, 87, 34, 0.1)' : 'rgba(255, 152, 0, 0.1)',
+                borderLeft: video.size > 100 * 1024 * 1024 ? '3px solid var(--error)' : '3px solid var(--warning)',
                 borderRadius: '4px',
                 marginTop: '12px',
                 fontSize: '14px',
                 color: 'var(--text-primary)'
               }}>
-                ⚠️ Большой размер файла ({formatFileSize(video.size)}) может замедлить обработку
+                {video.size > 100 * 1024 * 1024 ? '⚠️' : '⚠️'}
+                {' '}<strong>Размер файла: {formatFileSize(video.size)}</strong>
+                <div style={{ marginTop: '8px', fontSize: '13px', lineHeight: '1.5' }}>
+                  {video.size > 100 * 1024 * 1024 ? (
+                    <>
+                      <strong>Проблема:</strong> Файл слишком большой для эффективной обработки через base64.
+                      <br />
+                      <strong>Причина:</strong> Высокий битрейт видео (~{Math.round(video.size / metadata?.duration! / 125000)} Мбит/с)
+                      <br />
+                      <strong>Рекомендации:</strong>
+                      <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                        <li>Используйте сжатие видео (HandBrake, FFmpeg)</li>
+                        <li>Уменьшите разрешение до 720p</li>
+                        <li>Целевой размер: до 50MB для оптимальной скорости</li>
+                      </ul>
+                    </>
+                  ) : (
+                    <>Файл может обрабатываться дольше обычного. Рекомендуем сжать до 50MB для быстрой обработки.</>
+                  )}
+                </div>
               </div>
             )}
             <button
